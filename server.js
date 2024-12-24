@@ -2,6 +2,7 @@ const express = require('express')
 const path = require('path')
 const fs = require('fs')
 const morgan = require('morgan')
+const cors = require('cors')
 const eventLogger = require('./middleware/eventLogger')
 const app = express()
 
@@ -27,6 +28,9 @@ app.use(
 	})
 )
 app.use(morgan('dev'))
+
+//adding CORS
+app.use(cors())
 
 app.get('/', (req, res) => {
 	// console.log('logMorgan: ', logMorgan)
