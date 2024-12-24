@@ -4,12 +4,12 @@ const path = require('path')
 
 const eventLogger = async (req, res, next) => {
 	// console.log('in eventLogger ' + __dirname)
-    const { method, url } = req
-    const {statusCode} = res
-    const date = new Date()
+	const { method, url } = req
+	const { statusCode } = res
+	const date = new Date()
 	const logsFolder = path.join(__dirname, '..', '/logs')
 	const filePath = path.join(logsFolder, 'logs.txt')
-    const message = `${date} - ${method} - ${url} - ${statusCode}\n`
+	const message = `${date} - ${method} - ${url} - ${statusCode}\n`
 
 	try {
 		// if (!(await fs.access(logsFolder))) {
