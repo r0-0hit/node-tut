@@ -1,30 +1,41 @@
 const fs = require('fs').promises
-const { log } = require('console')
 const path = require('path')
+const { format } = require('date-fns')
+
+// The issue is that the statusCode is being accessed from res (response object), but at the point where you are logging, the status might not have been set to 500 yet. This often happens if the logging middleware or function is executed before the response is finalized.
+
+// To ensure you're capturing the correct status code, you should use the finish or close event of the response object. These events are triggered when the response is about to be sent to the client, ensuring the status code is finalized.
+
+//https://chatgpt.com/share/676a8d15-3e7c-800c-afbe-f03ea234a875
 
 const eventLogger = async (req, res, next) => {
 	// console.log('in eventLogger ' + __dirname)
-	const { method, url } = req
-	const { statusCode } = res
-	const date = new Date()
-	const logsFolder = path.join(__dirname, '..', '/logs')
-	const filePath = path.join(logsFolder, 'logs.txt')
-	const message = `${date} - ${method} - ${url} - ${statusCode}\n`
 
-	try {
-		// if (!(await fs.access(logsFolder))) {
-		//     await fs.mkdir(logsFolder)
-		// }
+	// if (!(await fs.access(logsFolder))) {
+	//     await fs.mkdir(logsFolder)
+	// }
+
+	res.on('finish', async () => {
+
+		const logsFolder = path.join(__dirname, '..', '/logs')
+		const filePath = path.join(logsFolder, 'logs.txt')
+		const { method, url, headers } = req
+		const { statusCode } = res
+		const dateTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
+		const message = `${dateTime} - ${method} - ${url} - ${headers.origin} - ${statusCode}\n`
+		
 		try {
 			await fs.access(logsFolder)
 		} catch {
 			await fs.mkdir(logsFolder)
 		}
-		await fs.appendFile(filePath, message)
-		next()
-	} catch (error) {
-		console.error(error)
-	}
+		try {
+			await fs.appendFile(filePath, message)
+		} catch (error) {
+			console.error(error)
+		}
+	})
+	next()
 }
 
 module.exports = eventLogger

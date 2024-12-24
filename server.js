@@ -4,7 +4,6 @@ const fs = require('fs')
 const morgan = require('morgan')
 const cors = require('cors')
 const eventLogger = require('./middleware/eventLogger')
-const { callbackify } = require('util')
 const app = express()
 
 const PORT = process.env.PORT || 5000
@@ -14,7 +13,13 @@ app.use(express.static(path.join(__dirname, 'public')))
 // app.use(express.static(path.resolve(__dirname, 'public')))
 
 //middleware
-// app.use(eventLogger)
+app.use(eventLogger)
+// app.use((req, res, next) => {
+// 	res.on('finish', (req, res, next) => {
+// 		eventLogger(req, res, next)
+// 		next()
+// 	})
+// })
 
 //third part middleware
 // app.use(morgan('tiny'))
@@ -38,18 +43,24 @@ const whiteList = [
 ]
 const corsOptions = {
 	origin: (origin, callback) => {
-		if (origin === undefined || whiteList.indexOf(origin) !== -1) {
+		if (!origin || whiteList.indexOf(origin) !== -1) {
 			callback(null, true)
 		} else {
 			callback(new Error('Not allowed by CORS!'))
 		}
 	},
 }
-app.use(cors())
+app.use(cors(corsOptions))
+
+// built-in middleware to handle urlencoded data
+// in other words, form data:
+// ‘content-type: application/x-www-form-urlencoded’
+app.use(express.urlencoded({ extended: false }))
+
+// built-in middleware for json
+app.use(express.json())
 
 app.get('/', (req, res) => {
-	// console.log('logMorgan: ', logMorgan)
-
 	res.sendFile(path.join(__dirname, 'public', 'home.html'))
 })
 
