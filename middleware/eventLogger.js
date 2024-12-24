@@ -17,10 +17,12 @@ const eventLogger = async (req, res, next) => {
 
 	res.on('finish', async () => {
 
+		//req.url only gives the path of the URL (e.g., /1 or /api/employees/1), but it does not include the protocol, hostname, or port. To log the full URL, you need to use req.protocol, req.get('host'), and req.originalUrl.
 		const logsFolder = path.join(__dirname, '..', '/logs')
 		const filePath = path.join(logsFolder, 'logs.txt')
-		const { method, url, headers } = req
+		const { method, headers } = req
 		const { statusCode } = res
+		const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`
 		const dateTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
 		const message = `${dateTime} - ${method} - ${url} - ${headers.origin} - ${statusCode}\n`
 		

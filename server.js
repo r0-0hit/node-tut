@@ -5,7 +5,8 @@ const cors = require('cors')
 const eventLogger = require('./middleware/eventLogger')
 const corsOptions = require('./utils/corsOptions')
 const accessLogStream = require('./utils/accessLogStream')
-const router = require('./routes/root')
+const rootRouter = require('./routes/root')
+const employeesRouter = require('./routes/apis/employeesRouter')
 
 const app = express()
 exports.app = app
@@ -37,7 +38,9 @@ app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
 
 //routes
-app.use('/', router)
+app.use('/', rootRouter)
+//employees controls
+app.use('/api/employees', employeesRouter)
 
 app.listen(PORT, () => {
 	console.log(`Server is running on port ${PORT}`)
