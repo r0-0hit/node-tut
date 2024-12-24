@@ -4,6 +4,7 @@ const fs = require('fs')
 const morgan = require('morgan')
 const cors = require('cors')
 const eventLogger = require('./middleware/eventLogger')
+const { callbackify } = require('util')
 const app = express()
 
 const PORT = process.env.PORT || 5000
@@ -23,13 +24,27 @@ const accessLogStream = fs.createWriteStream(
 	{ flags: 'a' }
 )
 app.use(
-	morgan('short', {
+	morgan('tiny', {
 		stream: accessLogStream,
 	})
 )
 app.use(morgan('dev'))
 
-//adding CORS
+//adding CORS(Cross Origin Resource Sharing)
+const whiteList = [
+	'www.yourSite.com',
+	'http://localhost:5000',
+	'http://127.0.0.1:5000',
+]
+const corsOptions = {
+	origin: (origin, callback) => {
+		if (origin === undefined || whiteList.indexOf(origin) !== -1) {
+			callback(null, true)
+		} else {
+			callback(new Error('Not allowed by CORS!'))
+		}
+	},
+}
 app.use(cors())
 
 app.get('/', (req, res) => {
