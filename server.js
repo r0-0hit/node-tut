@@ -12,6 +12,7 @@ const employeesRouter = require('./routes/apis/employeesRouter')
 const usersRouter = require('./routes/usersRouter')
 const verifyJWT = require('./middleware/verifyJWT')
 const refreshTokenRoute = require('./routes/refreshTokenRoute')
+const logoutRoute = require('./routes/logoutRoute');
 
 const app = express()
 exports.app = app
@@ -53,6 +54,8 @@ app.use('/users', usersRouter)
 app.use('/api/employees', [verifyJWT, employeesRouter])
 //access token refresh using refresh token
 app.use('/refresh', refreshTokenRoute)
+//logout
+app.use('/logout', logoutRoute)
 
 app.listen(PORT, () => {
 	console.log(`Server is running on port ${PORT}`)
