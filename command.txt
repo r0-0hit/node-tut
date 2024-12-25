@@ -1,0 +1,2 @@
+require('crypto').randomBytes(64).toString('hex')
+//fot genrating ACCESS_TOKEN_SECRET and REFRESH_TOKEN_SECRET
