@@ -3,13 +3,15 @@ const express = require('express')
 const path = require('path')
 const morgan = require('morgan')
 const cors = require('cors')
+const cookieParser = require('cookie-parser')
 const eventLogger = require('./middleware/eventLogger')
 const corsOptions = require('./config/corsOptions')
 const accessLogStream = require('./config/accessLogStream')
 const rootRouter = require('./routes/root')
 const employeesRouter = require('./routes/apis/employeesRouter')
 const usersRouter = require('./routes/usersRouter')
-const verifyJWT = require('./middleware/verifyJWT');
+const verifyJWT = require('./middleware/verifyJWT')
+const refreshTokenRoute = require('./routes/refreshTokenRoute')
 
 const app = express()
 exports.app = app
@@ -40,12 +42,17 @@ app.use(express.urlencoded({ extended: false }))
 // built-in middleware for json
 app.use(express.json())
 
+//middleware for cookies
+app.use(cookieParser())
+
 //routes
 app.use('/', rootRouter)
-//employees controls
-app.use('/api/employees', [ verifyJWT, employeesRouter])
 //user register and login
 app.use('/users', usersRouter)
+//employees controls
+app.use('/api/employees', [verifyJWT, employeesRouter])
+//access token refresh using refresh token
+app.use('/refresh', refreshTokenRoute)
 
 app.listen(PORT, () => {
 	console.log(`Server is running on port ${PORT}`)
