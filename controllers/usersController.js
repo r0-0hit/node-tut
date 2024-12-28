@@ -29,6 +29,9 @@ const userRegister = async (req, res, next) => {
 		const hashedPwd = await bcrypt.hash(pwd, saltRounds)
 		const user = {
 			username: username,
+			roles: {
+				User: 2001,
+			},
 			pwd: hashedPwd,
 		}
 		await fs.writeFile(
@@ -73,10 +76,16 @@ const userLogin = async (req, res, next) => {
 		})
 	} else {
 		try {
+			const roles = Object.values(user.roles)
 			const accessToken = jwt.sign(
-				{ username: user.username },
+				{
+					UserInfo: {
+						username: user.username,
+						roles: roles,
+					},
+				},
 				process.env.ACCESS_TOKEN_SECRET,
-				{ expiresIn: '30s' }
+				{ expiresIn: '1h' }
 			)
 			const refreshToken = jwt.sign(
 				{ username: user.username },
@@ -109,7 +118,7 @@ const userLogin = async (req, res, next) => {
 				httpOnly: true,
 				sameSite: 'None',
 				secure: true,
-				maxAge: 24 * 60 * 60 * 1000,
+				maxAge: 5 * 60 * 60 * 1000,
 			})
 			res.status(200).json({
 				sucess: true,
