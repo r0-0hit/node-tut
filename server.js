@@ -4,6 +4,7 @@ const path = require('path')
 const morgan = require('morgan')
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
+const mongoose = require('mongoose')
 const eventLogger = require('./middleware/eventLogger')
 const corsOptions = require('./config/corsOptions')
 const accessLogStream = require('./config/accessLogStream')
@@ -12,11 +13,15 @@ const employeesRouter = require('./routes/apis/employeesRouter')
 const usersRouter = require('./routes/usersRouter')
 const verifyJWT = require('./middleware/verifyJWT')
 const refreshTokenRoute = require('./routes/refreshTokenRoute')
-const logoutRoute = require('./routes/logoutRoute');
+const logoutRoute = require('./routes/logoutRoute')
+const dbConnect = require('./config/dbConnect')
 
 const app = express()
 exports.app = app
 const PORT = process.env.PORT || 5000
+
+//connect to database
+dbConnect()
 
 //static files
 app.use(express.static(path.join(__dirname, 'public')))
@@ -57,6 +62,9 @@ app.use('/refresh', refreshTokenRoute)
 //logout
 app.use('/logout', logoutRoute)
 
-app.listen(PORT, () => {
-	console.log(`Server is running on port ${PORT}`)
+mongoose.connection.on('open', () => {
+	console.log('Connected to MongoDB')
+	app.listen(PORT, () => {
+		console.log(`Server is running on port ${PORT}`)
+	})
 })
