@@ -1,12 +1,8 @@
 const bcrypt = require('bcrypt')
-const fs = require('fs').promises
-const path = require('path')
-require('dotenv').config()
 const jwt = require('jsonwebtoken')
-const userData = require('../models/users.json')
 const User = require('../models/User')
 
-const userRegister = async (req, res, next) => {
+const userRegister = async (req, res) => {
 	const { username, pwd } = req.body
 	const saltRounds = 10
 	// if (!username || !pwd) return res.sendStatus(400)
@@ -18,7 +14,6 @@ const userRegister = async (req, res, next) => {
 		})
 	}
 	//same username check
-	// if (userData.find(user => user.username === username)) return res.sendStatus(409) //conflict
 	const duplicate = await User.findOne({ username: username }).exec()
 	if (duplicate) {
 		return res.status(400).json({
@@ -42,10 +37,9 @@ const userRegister = async (req, res, next) => {
 	} catch (error) {
 		console.error(error)
 	}
-	next()
 }
 
-const userLogin = async (req, res, next) => {
+const userLogin = async (req, res) => {
 	const { username, pwd } = req.body
 	if (!username || !pwd) {
 		return res.status(400).json({
@@ -54,7 +48,7 @@ const userLogin = async (req, res, next) => {
 			data: '',
 		})
 	}
-	const user = await User.findOne({ username: username}).exec()
+	const user = await User.findOne({ username: username }).exec()
 	if (!user) {
 		return res.status(401).json({
 			//Unauthorized
@@ -88,28 +82,9 @@ const userLogin = async (req, res, next) => {
 				process.env.REFRESH_TOKEN_SECRET,
 				{ expiresIn: '5h' }
 			)
-			//storing the refresh token in the user data
-			// userData.map(user => {
-			// 	return user.username === username
-			// 		? {
-			// 				...user,
-			// 				refreshToken: refreshToken,
-			// 		  }
-			// 		: user
-			// })
-			await fs.writeFile(
-				path.join(__dirname, '..', 'models', 'users.json'),
-				JSON.stringify([
-					...userData.map(user => {
-						return user.username === username
-							? {
-									...user,
-									refreshToken: refreshToken,
-							  }
-							: user
-					}),
-				])
-			)
+			user.refreshToken = refreshToken
+			await user.save()
+
 			res.cookie('jwt', refreshToken, {
 				httpOnly: true,
 				sameSite: 'None',
@@ -126,7 +101,6 @@ const userLogin = async (req, res, next) => {
 			console.error(error)
 		}
 	}
-	next()
 }
 
 module.exports = {

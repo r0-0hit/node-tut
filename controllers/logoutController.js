@@ -1,12 +1,10 @@
-const fs = require('fs').promises
-const path = require('path')
-const userData = require('../models/users.json')
+const User = require('../models/User')
 
-const logout = async (req, res, next) => {
+const logout = async (req, res) => {
 	const cookies = req.cookies
 	if (!cookies?.jwt) return res.sendStatus(204) //no content
 	const cookieRefreshToken = cookies.jwt
-	const user = userData.find(user => user.refreshToken === cookieRefreshToken)
+	const user = await User.findOne({ refreshToken: cookieRefreshToken }).exec()
 	if (!user) {
 		res.clearCookie('jwt', {
 			httpOnly: true,
@@ -16,19 +14,8 @@ const logout = async (req, res, next) => {
 		return res.sendStatus(204)
 	}
 	try {
-		await fs.writeFile(
-			path.join(__dirname, '..', 'models', 'users.json'),
-			JSON.stringify([
-				...userData.map(user => {
-					return user.refreshToken === cookieRefreshToken
-						? {
-								...user,
-								refreshToken: '',
-						  }
-						: user
-				}),
-			])
-		)
+		user.refreshToken = ''
+		await user.save()
 		res.clearCookie('jwt', {
 			httpOnly: true,
 			sameSite: 'None',

@@ -1,12 +1,11 @@
-require('dotenv').config()
+const User = require('../models/User')
 const jwt = require('jsonwebtoken')
-const userData = require('../models/users.json')
 
-const refreshToken = (req, res, next) => {
+const refreshToken = async (req, res) => {
 	const { cookies } = req
 	if (!cookies?.jwt) return res.sendStatus(401)
 	const cookieRefreshToken = cookies.jwt
-	const user = userData.find(user => user.refreshToken === cookieRefreshToken)
+	const user = await User.findOne({ refreshToken: cookieRefreshToken }).exec()
 	if (!user) return res.sendStatus(403) //forbidden
 
 	//evaluate jwt
