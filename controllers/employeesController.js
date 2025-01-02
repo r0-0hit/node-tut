@@ -1,16 +1,25 @@
-let employeesData = require('../models/employees.json')
 const Employee = require('../models/Employee')
+const mongoose = require('mongoose')
 
-const getEmployees = (req, res, next) => {
-	if (req.params.id) {
-		res.status(200).json({
-			sucess: true,
-			data: employeesData.find(
-				employe => employe.id === Number(req.params.id)
-			),
+const getEmployees = async (req, res) => {
+	// Validate the id
+	if (req?.params?.id && !mongoose.Types.ObjectId.isValid(req.params.id)) {
+		return res.status(400).json({
+			message: `Invalid ID format: ${req.params.id}`,
 		})
-	} else if (employeesData.length > 0) {
-		res.status(200).json({
+	}
+	const employeesData = req.params?.id
+		? await Employee.findById(req.params.id).exec()
+		: await Employee.find()
+
+	if (req.params?.id && !employeesData) {
+		return res.status(404).json({
+			sucess: false,
+			data: `No employee found with id: ${req.params.id}`,
+		})
+	}
+	if (!req.params?.id && employeesData.length > 0) {
+		return res.status(200).json({
 			sucess: true,
 			data: employeesData,
 		})
@@ -20,11 +29,10 @@ const getEmployees = (req, res, next) => {
 			data: 'No employees found.',
 		})
 	}
-	next()
 }
 
-const addEmployees = async (req, res, next) => {
-	const { id, firstname, lastname } = req.body
+const addEmployees = async (req, res) => {
+	const { firstname, lastname } = req.body
 	if (!firstname || !lastname) {
 		res.status(400).json({
 			sucess: false,
@@ -35,56 +43,72 @@ const addEmployees = async (req, res, next) => {
 			firstname: firstname,
 			lastname: lastname,
 		}
-		await Employee.create(newEmployee)
+		const result = await Employee.create(newEmployee)
 		res.status(201).json({
 			sucess: true,
-			data: employeesData,
+			data: result,
 		})
 	}
-	next()
 }
 
-const updateEmployees = (req, res, next) => {
-	const id = Number(req.params.id)
+const updateEmployees = async (req, res) => {
+	// Validate the id
+	if (req?.params?.id && !mongoose.Types.ObjectId.isValid(req.params.id)) {
+		return res.status(400).json({
+			message: `Invalid ID format: ${req.params.id}`,
+		})
+	}
+	const { id } = req.params
 	const { firstname, lastname } = req.body
-	if (!id || !employeesData.find(employe => employe.id === id)) {
-		res.status(404).json({
+	const employe = await Employee.findById(id)
+	if (!id || !employe) {
+		return res.status(404).json({
 			sucess: false,
 			data: 'Pleasr provide a valid id.',
 		})
-	} else {
-		employeesData = employeesData.map(employe => {
-			return employe.id === id
-				? {
-						...employe,
-						firstname: firstname,
-						lastname: lastname,
-				  }
-				: employe
-		})
-		res.status(200).json({
-			sucess: true,
-			data: employeesData,
+	}
+	if (!firstname || !lastname) {
+		return res.status(204).json({
+			sucess: false,
+			data: 'Pleasr provide firstname and lastname.',
 		})
 	}
-	next()
+	employe.firstname = firstname
+	employe.lastname = lastname
+	await employe.save()
+	res.status(200).json({
+		sucess: true,
+		data: employe,
+	})
 }
 
-const deleteEmployees = (req, res, next) => {
-	const id = Number(req.params.id)
-	if (!id || !employeesData.find(employe => employe.id === id)) {
+const deleteEmployees = async (req, res) => {
+	// Validate the id
+	if (req?.params?.id && !mongoose.Types.ObjectId.isValid(req.params.id)) {
+		return res.status(400).json({
+			message: `Invalid ID format: ${req.params.id}`,
+		})
+	}
+	const id = req.params.id
+	if (!id) {
 		res.status(404).json({
 			sucess: false,
 			data: 'Pleasr provide a valid id.',
 		})
 	} else {
-		employeesData = employeesData.filter(employe => employe.id !== id)
+		const employee = await Employee.findOne({ _id: req.body.id }).exec()
+		if (!employee) {
+			return res.status(404).json({
+				message: `No employee matches ID ${req.body.id}.`,
+			})
+		}
+		const result = await employee.deleteOne() //{ _id: req.body.id }
+		// const result = await Employee.deleteOne({ _id: id })
 		res.status(200).json({
 			sucess: true,
-			data: employeesData,
+			data: result,
 		})
 	}
-	next()
 }
 
 module.exports = {
