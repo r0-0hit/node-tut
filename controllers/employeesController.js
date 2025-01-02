@@ -1,4 +1,5 @@
 let employeesData = require('../models/employees.json')
+const Employee = require('../models/Employee')
 
 const getEmployees = (req, res, next) => {
 	if (req.params.id) {
@@ -22,7 +23,7 @@ const getEmployees = (req, res, next) => {
 	next()
 }
 
-const addEmployees = (req, res, next) => {
+const addEmployees = async (req, res, next) => {
 	const { id, firstname, lastname } = req.body
 	if (!firstname || !lastname) {
 		res.status(400).json({
@@ -30,14 +31,11 @@ const addEmployees = (req, res, next) => {
 			data: 'Please provide firstname and lastname.',
 		})
 	} else {
-		employeesData = [
-			...employeesData,
-			{
-				id: id ? id : employeesData.length + 1,
-				firstname: firstname,
-				lastname: lastname,
-			},
-		]
+		const newEmployee = {
+			firstname: firstname,
+			lastname: lastname,
+		}
+		await Employee.create(newEmployee)
 		res.status(201).json({
 			sucess: true,
 			data: employeesData,
